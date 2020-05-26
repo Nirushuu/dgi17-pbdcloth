@@ -277,7 +277,7 @@ class Cloth {
     //Draw vertices interpolated as triangle mesh
     void drawMesh () {
 	//draw shape
-	p.beginShape(p.TRIANGLE_STRIP);
+	p.beginShape(TRIANGLE_STRIP);
 	p.fill(128);
 	for (int i = 1; i < width; i++) {
 	    
@@ -544,17 +544,18 @@ class Vector {
 	System.out.println("x: "+x+". y: "+y+". z: "+z+".");
     }
 
+}
    //////
-   //////
+   ////// (in outermost layer)
 
    //STATIC FUNCTIONS
    //Computes the dot product of two vectors
-   static float dotProduct (Vector vec1, Vector vec2) {
+   float dotProduct (Vector vec1, Vector vec2) {
       return (vec1.x*vec2.x+vec1.y*vec2.y+vec1.z*vec2.z);
    }
 
    //Computes the cross product of two vectors.
-   static Vector crossProduct (Vector u, Vector v) {
+   Vector crossProduct (Vector u, Vector v) {
       float newX = u.y*v.z - u.z*v.y;
       float newY = u.z*v.x - u.x*v.z;
       float newZ = u.x*v.y - u.y*v.x;
@@ -562,13 +563,13 @@ class Vector {
    }
 
     //Returns the distance between two vectors
-    public static float getDistance(Vector v, Vector w) {
+    float getDistance(Vector v, Vector w) {
         Vector distance = v.copy();
         distance.subtract(w);
         float distancef = distance.getMagnitude();
         return distancef;
     }
-}
+//}
 
 
 
@@ -614,4 +615,3 @@ class Vertex {
     }
     
 }
-
