@@ -119,15 +119,12 @@ void keyPressed() {
 /* 
 *	Copied from Cloth.java
 */
-import processing.core.*;
-import java.util.ArrayList;
-
 
 /* The cloth class creates a cloth object which consists of vertices interconnected by distance constraints.
  * The vertices can be interpolated with triangles to draw a mesh
  *
  */
-public class Cloth {
+class Cloth {
     PApplet p;
     int width;
     int length;
@@ -145,130 +142,125 @@ public class Cloth {
     Boolean stageMode = false;   //easter egg...
     Integer iterNum = 3;         //Number of solver iterations
     
-    public Cloth (PApplet parent, SphereObj sphere, int width, int length, float spacing) {
-	p = parent;
-	this.width = width;
-	this.length = length;
-	Vector corner = new Vector(0,0,0);
-	constraints = new ArrayList<DistanceConstraint>();
-	this.sphere = sphere;
-	
-	//Gravity acceleration
-	g = new Vector(0,(float)1,0);
-
-	//Initialize size of arrays
-	vertices = new Vertex[width][length];
-
-	//Populate vertices and constraints
-	for (int i = 0; i < width; i++) {
-	    for (int j = 0; j < length; j++) {
+    Cloth (PApplet parent, SphereObj sphere, int width, int length, float spacing) {
+		p = parent;
+		this.width = width;
+		this.length = length;
+		Vector corner = new Vector(0,0,0);
+		constraints = new ArrayList<DistanceConstraint>();
+		this.sphere = sphere;
 		
-		vertices[i][j] = new Vertex (corner.copy(), 1);
-		corner.add(new Vector(spacing,0,0));
+		//Gravity acceleration
+		g = new Vector(0,(float)1,0);
+
+		//Initialize size of arrays
+		vertices = new Vertex[width][length];
+
+		//Populate vertices and constraints
+		for (int i = 0; i < width; i++) {
+		    for (int j = 0; j < length; j++) {
+			
+			vertices[i][j] = new Vertex (corner.copy(), 1);
+			corner.add(new Vector(spacing,0,0));
+			
+
+			//Add constraint along width
+			if (i > 0) {
+			    constraints.add(new DistanceConstraint(vertices[i-1][j], vertices[i][j], spacing, true));
+			}
+			//add constraint along length
+			if (j > 0) {
+			    constraints.add(new DistanceConstraint(vertices[i][j-1], vertices[i][j], spacing, true));
+			}
+
+		    }
+		    corner.x = 0;
+		    corner.add(new Vector(0,spacing,0));
+		}
+
+		//LOCK CORNERS
+		vertices[0][0].w = 0;
+		vertices[width-1][0].w = 0;
 		
-
-		//Add constraint along width
-		if (i > 0) {
-		    constraints.add(new DistanceConstraint(vertices[i-1][j], vertices[i][j], spacing, true));
-		}
-		//add constraint along length
-		if (j > 0) {
-		    constraints.add(new DistanceConstraint(vertices[i][j-1], vertices[i][j], spacing, true));
-		}
-
-	    }
-	    corner.x = 0;
-	    corner.add(new Vector(0,spacing,0));
-	}
-
-	//LOCK CORNERS
-	vertices[0][0].w = 0;
-	vertices[width-1][0].w = 0;
-	
     }
     
 
     //Update state
-    public void update() {
-	
-	if (gravityMode) {gravity();}
-	solve(iterNum);
-
+    void update() {	
+		if (gravityMode) {gravity();}
+		solve(iterNum);
     }
 
     //Draw cloth
-    public void draw() {
-
-	if (meshMode) {drawMesh();}
-	else {drawVertices();}
-
+    void draw() {
+		if (meshMode) {drawMesh();}
+		else {drawVertices();}
     }
 
 
     //Add gravity as external force.
     public void gravity () {
-	for (int i = 0; i < width; i++) {
-	    for (int j = 0; j < length; j++) {
-		vertices[i][j].velocity.add(g);
-	    }
-	}
-
+		for (int i = 0; i < width; i++) {
+		    for (int j = 0; j < length; j++) {
+			vertices[i][j].velocity.add(g);
+		    }
+		}
     }
 
     //From Muller 2006
-    public void solve(int iterNum) {
-	//apply external forces to all vertices
-	
+    void solve(int iterNum) {
+		//apply external forces to all vertices
+		
 
-	//damp all velocities
+		//damp all velocities
 
-	//get vector of positions p <- x + deltaT*v
-	for (int i = 0; i < width; i++) {
-	    for (int j = 0; j < length; j++) {
-		vertices[i][j].setP(timestep);
-	    }
-	}
-
-	//Generate collision constraints
-	collisionConstraints = new ArrayList<CollisionConstraint>();
-	for (int i = 0; i < width; i++) {
-	    for (int j = 0; j < length; j++) {
-		if(sphere.collides(vertices[i][j])) {
-		    collisionConstraints.add(new CollisionConstraint(sphere.position.copy(),vertices[i][j],sphere.radius+5, false));
+		//get vector of positions p <- x + deltaT*v
+		for (int i = 0; i < width; i++) {
+		    for (int j = 0; j < length; j++) {
+			vertices[i][j].setP(timestep);
+		    }
 		}
-	    }
-	}
 
-	//Modify p to satisfy all constrains, iterate n times
-	for (int iter = 0; iter < iterNum; iter++) {
-	    for (int i = 0; i < constraints.size(); i++) {
-		constraints.get(i).solve();
+		//Generate collision constraints
+		collisionConstraints = new ArrayList<CollisionConstraint>();
+		for (int i = 0; i < width; i++) {
+		    for (int j = 0; j < length; j++) {
+			if(sphere.collides(vertices[i][j])) {
+			    collisionConstraints.add(new CollisionConstraint(sphere.position.copy(),vertices[i][j],sphere.radius+5, false));
+			}
+		    }
+		}
+
+		//Modify p to satisfy all constrains, iterate n times
+		for (int iter = 0; iter < iterNum; iter++) {
+		    for (int i = 0; i < constraints.size(); i++) {
+			constraints.get(i).solve();
+		    }
+		    for (int i = 0; i < collisionConstraints.size(); i++) {
+			collisionConstraints.get(i).solve();
+		    }
+		}
+		
+		//Update position and velocities of all vertices
+		for (int i = 0; i < width; i++) {
+		    for (int j = 0; j < length; j++) {
+			vertices[i][j].update(timestep);
+		    }
+		}
+		
+		
+		//Add friction to colliding vertices
+		//Take 10% off colliding vertices
+		for (int i = 0; i < collisionConstraints.size(); i++) {
+		    collisionConstraints.get(i).getVertex().velocity.scale((float)0.7);
 	    }
-	    for (int i = 0; i < collisionConstraints.size(); i++) {
-		collisionConstraints.get(i).solve();
-	    }
-	}
-	
-	//Update position and velocities of all vertices
-	for (int i = 0; i < width; i++) {
-	    for (int j = 0; j < length; j++) {
-		vertices[i][j].update(timestep);
-	    }
-	}
-	
-	
-	//Add friction to colliding vertices
-	//Take 10% off colliding vertices
-	for (int i = 0; i < collisionConstraints.size(); i++) {
-	    collisionConstraints.get(i).getVertex().velocity.scale((float)0.7);
-	    }
-	
+		
     }
 
 
 
     //Draw vertices as ellipses
-    public void drawVertices () {
+    void drawVertices () {
        	for (int i = 0; i < width; i++) {
 	    for (int j = 0; j < length; j++) {
 		p.pushMatrix();		
@@ -283,7 +275,7 @@ public class Cloth {
     }
 
     //Draw vertices interpolated as triangle mesh
-    public void drawMesh () {
+    void drawMesh () {
 	//draw shape
 	p.beginShape(p.TRIANGLE_STRIP);
 	p.fill(128);
@@ -308,13 +300,13 @@ public class Cloth {
     }
 
     //TOGGLES CORNER VERTEX STATIC
-    public void toggleStatic () {
+    void toggleStatic () {
 	vertices[0][0].w = (vertices[0][0].w+1)%2;
 	vertices[width-1][0].w = (vertices[width-1][0].w+1)%2;
     }
 
     //Position setter of corners
-    public void setPosition(int index1, int index2, Vector pos) {
+    void setPosition(int index1, int index2, Vector pos) {
 	vertices[index1][index2].position = pos.copy();
     }
 
@@ -329,13 +321,13 @@ public class Cloth {
 /*
 *	Copied from CollisionConstraint.java
 */
-public class CollisionConstraint {
+class CollisionConstraint {
     private Vector p;
     private Vertex b;
     private float d;
     private boolean equality;
 
-    public CollisionConstraint (Vector p, Vertex b, float d, boolean equality)
+    CollisionConstraint (Vector p, Vertex b, float d, boolean equality)
     {
 	this.p = p;
 	this.b = b;
@@ -343,18 +335,18 @@ public class CollisionConstraint {
 	this.equality = equality;
     }
 
-    public boolean isEquality () {
+    boolean isEquality () {
 	return equality;
     }
 
-    public float evaluate () {
+    float evaluate () {
 	Vector BA = p.copy();
 	BA.subtract(b.p);
 	return BA.getMagnitude()-d;
     }
 
     
-    public void solve () {
+    void solve () {
 	//SKIP SATISFIED INEQUALITIES
 	if (!isEquality() && (evaluate() > 0)) {
 	    return;
@@ -375,7 +367,7 @@ public class CollisionConstraint {
 
     }
 
-    public Vertex getVertex() {return b;}
+    Vertex getVertex() {return b;}
     
 }
 
@@ -387,31 +379,31 @@ public class CollisionConstraint {
 /*
 *	Copied from DistanceConstraint.java
 */
-public class DistanceConstraint {
+class DistanceConstraint {
     private Vertex a;
     private Vertex b;
     private float d;
     private boolean equality;
 
-    public DistanceConstraint (Vertex a, Vertex b, float d, boolean equality) {
+    DistanceConstraint (Vertex a, Vertex b, float d, boolean equality) {
 	this.a = a;
 	this.b = b;
 	this.d = d;
 	this.equality = equality;
     }
 
-    public boolean isEquality () {
+    boolean isEquality () {
 	return equality;
     }
 
-    public float evaluate () {
+    float evaluate () {
 	Vector BA = a.p.copy();
 	BA.subtract(b.p);
 	return BA.getMagnitude()-d;
     }
 
     
-    public void solve () {
+    void solve () {
 	//SKIP SATISFIED INEQUALITIES
 	if (!isEquality() && (evaluate() > 0)) {
 	    return;
@@ -442,27 +434,25 @@ public class DistanceConstraint {
 /*
 *	Copied from SphereObj.java
 */	
-import processing.core.PApplet;
-
-public class SphereObj {
+class SphereObj {
     Vector position;
     float radius;
     PApplet p;
-    public SphereObj (Vector position, float radius, PApplet parent) {
+    SphereObj (Vector position, float radius, PApplet parent) {
 	this.radius = radius;
 	p = parent;
 	this.position = position;
     }
 
 
-    public void draw() {
+    void draw() {
 	p.pushMatrix();
 	p.translate(position.x,position.y,position.z);
 	p.sphere(radius);
 	p.popMatrix();
     }
 
-    public boolean collides (Vertex v) {
+    boolean collides (Vertex v) {
 	Vector testVector = position.copy();
 	testVector.subtract (v.position);
 	if (testVector.getMagnitude() <= radius) {return true;}
@@ -478,9 +468,6 @@ public class SphereObj {
 /*
 *	Copied from Vector.java
 */
-import processing.core.PVector;
-import processing.core.PApplet;
-
 
 /**
  *  Vector class
@@ -594,14 +581,14 @@ class Vector {
 */
 
 
-public class Vertex {
+class Vertex {
 
     float w;
     Vector position;
     Vector velocity;
     Vector p;
 
-    public Vertex(Vector initialPosition, float mass) {
+    Vertex(Vector initialPosition, float mass) {
 	position = initialPosition;
 	velocity = new Vector(0,0,0);
 	w = 1/mass;
@@ -609,7 +596,7 @@ public class Vertex {
     }
     
     //GENERATE P USED FOR SOLVING CONSTRAINTS
-    public void setP(float timestep) {
+    void setP(float timestep) {
 	p = position.copy();
 	Vector scaledVelocity = velocity.copy();
 	scaledVelocity.scale(timestep);
@@ -617,7 +604,7 @@ public class Vertex {
     }
 
     //UPDATE POSITION AND VELOCITY AFTER SOLVING THE CONSTRAINTS
-    public void update(float timestep) {
+    void update(float timestep) {
 	Vector deltaPos = p.copy();
 	deltaPos.subtract(position);
 	deltaPos.scale(1/timestep);
