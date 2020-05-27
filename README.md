@@ -9,3 +9,5 @@ https://dgiproject2017.wordpress.com
 
 Processing library
 https://processing.org
+
+Original article by Müller et al. https://www.sciencedirect.com/science/article/pii/S1047320307000065
