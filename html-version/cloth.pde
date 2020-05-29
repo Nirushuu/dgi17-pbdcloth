@@ -30,9 +30,9 @@ PFont f;
 Cloth cloth;
 SphereObj sphere;
 
-int width = 30;
-int length = 30;
-float spacing = 8;
+int width = 20;
+int length = 20;
+float spacing = 15;
 int z = 0;
 
 
