@@ -24,6 +24,8 @@
 * @author Nils Lenart
 */
 
+// correct corners no twisting DONE
+
 PFont f;
 Cloth cloth;
 SphereObj sphere;
@@ -35,11 +37,10 @@ int z = 0;
 
 
 //SETUP FUNCTIONS
-void settings(){
-    size(1000,700,P3D);
-}
-
 void setup(){
+
+	size(1000, 700, OPENGL);
+
 	//Initialize font
     f = createFont("Arial",16,true);
 
@@ -71,14 +72,14 @@ void draw() {
 
 	//sets two corners of cloth to mouse position
 	cloth.setPosition(0,0,new Vector(mouseX, mouseY, z));
-	cloth.setPosition(width-1, 0, new Vector(mouseX+(width-1)*spacing, mouseY, z));
+	cloth.setPosition(0, width-1, new Vector(mouseX+(width-1)*spacing, mouseY, z));
 
-	//updates the state of the cloth and draws
+	// //updates the state of the cloth and draws
 	cloth.update();
 	cloth.draw();
 
-	//draws the sphere
-	sphere.draw();
+	// //draws the sphere
+	// sphere.draw();
 }
 
 
@@ -180,7 +181,7 @@ class Cloth {
 
 		//LOCK CORNERS
 		vertices[0][0].w = 0;
-		vertices[width-1][0].w = 0;
+		vertices[0][width - 1].w = 0;
 		
     }
     
@@ -217,43 +218,43 @@ class Cloth {
 		//get vector of positions p <- x + deltaT*v
 		for (int i = 0; i < width; i++) {
 		    for (int j = 0; j < length; j++) {
-			vertices[i][j].setP(timestep);
+				vertices[i][j].setP(timestep);
 		    }
 		}
 
 		//Generate collision constraints
-		collisionConstraints = new ArrayList<CollisionConstraint>();
-		for (int i = 0; i < width; i++) {
-		    for (int j = 0; j < length; j++) {
-			if(sphere.collides(vertices[i][j])) {
-			    collisionConstraints.add(new CollisionConstraint(sphere.position.copy(),vertices[i][j],sphere.radius+5, false));
-			}
-		    }
-		}
+		// collisionConstraints = new ArrayList<CollisionConstraint>();
+		// for (int i = 0; i < width; i++) {
+		//     for (int j = 0; j < length; j++) {
+		// 		if(sphere.collides(vertices[i][j])) {
+		// 		    collisionConstraints.add(new CollisionConstraint(sphere.position.copy(),vertices[i][j],sphere.radius+5, false));
+		// 		}
+		//     }
+		// }
 
 		//Modify p to satisfy all constrains, iterate n times
 		for (int iter = 0; iter < iterNum; iter++) {
 		    for (int i = 0; i < constraints.size(); i++) {
-			constraints.get(i).solve();
+				constraints.get(i).solve();
 		    }
-		    for (int i = 0; i < collisionConstraints.size(); i++) {
-			collisionConstraints.get(i).solve();
-		    }
+		  //   for (int i = 0; i < collisionConstraints.size(); i++) {
+				// collisionConstraints.get(i).solve();
+		  //   }
 		}
 		
 		//Update position and velocities of all vertices
 		for (int i = 0; i < width; i++) {
 		    for (int j = 0; j < length; j++) {
-			vertices[i][j].update(timestep);
+				vertices[i][j].update(timestep);
 		    }
 		}
 		
 		
 		//Add friction to colliding vertices
-		//Take 10% off colliding vertices
-		for (int i = 0; i < collisionConstraints.size(); i++) {
-		    collisionConstraints.get(i).getVertex().velocity.scale((float)0.7);
-	    }
+		// Take 10% off colliding vertices
+		// for (int i = 0; i < collisionConstraints.size(); i++) {
+		//     collisionConstraints.get(i).getVertex().velocity.scale((float)0.7);
+	 //    }
 		
     }
 
@@ -301,13 +302,15 @@ class Cloth {
 
     //TOGGLES CORNER VERTEX STATIC
     void toggleStatic () {
-	vertices[0][0].w = (vertices[0][0].w+1)%2;
-	vertices[width-1][0].w = (vertices[width-1][0].w+1)%2;
+		// vertices[0][0].w = (vertices[0][0].w+1)%2;
+		// vertices[width-1][0].w = (vertices[width-1][0].w+1)%2;
+		vertices[0][0].w = Number.MAX_VALUE;		
+		vertices[0][width-1].w = Number.MAX_VALUE;
     }
 
     //Position setter of corners
     void setPosition(int index1, int index2, Vector pos) {
-	vertices[index1][index2].position = pos.copy();
+		vertices[index1][index2].position = pos.copy();
     }
 
 }
@@ -453,10 +456,14 @@ class SphereObj {
     }
 
     boolean collides (Vertex v) {
-	Vector testVector = position.copy();
-	testVector.subtract (v.position);
-	if (testVector.getMagnitude() <= radius) {return true;}
-	else {return false;}
+		Vector testVector = position.copy();
+		testVector.subtract(v.position);
+		if (testVector.getMagnitude() <= radius) {
+			return true;
+		} else {
+			return false;
+		}
+		// return true;
     }
 }
 
@@ -522,7 +529,8 @@ class Vector {
 
    //Returns the magnitude of a vector
    float getMagnitude () {
-      return PApplet.sqrt(PApplet.sq(x)+PApplet.sq(y)+PApplet.sq(z));
+      // return PApplet.sqrt(PApplet.sq(x)+PApplet.sq(y)+PApplet.sq(z));
+      return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
    }
 
 
